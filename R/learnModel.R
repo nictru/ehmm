@@ -24,7 +24,10 @@ getLearnModelOptions <- function(){
     list(arg="--nthreads", type="integer", default=formals(learnModel)$nthreads,
          help="Number of threads to be used"),
     list(arg="--pseudoCount", type="integer",
-         help="Pseudo-count added to read-counts for log-normal fit. Default = 1.")
+         help="Pseudo-count added to read-counts for log-normal fit. Default = 1."),
+    list(arg="--binsize", type="integer", default=100,
+         help="Size of a bin in base pairs. Each given region will be partitioned into
+         bins of this size.")
     )
   opts
 }
@@ -65,13 +68,17 @@ learnModelCLI <- function(args, prog){
 #' @param nthreads number of threads used for learning.
 #' @param pseudoCount pseudo-count to add to read counts.
 #' This is necessary because log-counts are calculated in order to fit a log-normal distribution.
+#' @param binsize size of a bin in base pairs. Each given region will be partitioned into
+#' bins of this size.
 #' @return A list with the following arguments:
 #' 
 #' @export
-learnModel <- function(regions, nstates, bamtab, counts=NULL, outdir=".", nthreads=1, pseudoCount=1){
+learnModel <- function(regions, nstates, bamtab, counts=NULL, outdir=".", nthreads=1, pseudoCount=1, binsize=100){
+  regions <- binifyRegions(regions, binsize)
+
   # if not given, calculate and save count matrix
   if (is.null(counts)){
-    counts <- getCountMatrix(regions, bamtab, outdir, binsize=100, nthreads, pseudoCount)
+    counts <- getCountMatrix(regions, bamtab, outdir, binsize, nthreads, pseudoCount)
   }
 
   # learn unsupervised model

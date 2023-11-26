@@ -26,7 +26,10 @@ getApplyModelOptions <- function(){
          help="Whether or not to let the model learn the transition probabilities while fixing the emission parameters."),
     list(arg="--refCounts", type="character", parser=readCounts,
          help="Path to the count matrix of the reference model. If given, the counts of the query sample will be quantile-normalized to its distribution.
-         refCounts should ideally represent a full genome and not just a subset.")
+         refCounts should ideally represent a full genome and not just a subset."),
+    list(arg="--binsize", type="integer", default=100,
+         help="Size of a bin in base pairs. Each given region will be partitioned into
+         bins of this size.")
   )
   opts
 }
@@ -66,13 +69,14 @@ applyModelCLI <- function(args, prog){
 #' @param learnTrans flag, whether or not to let the model learn the transition probabilities while fixing the emission parameters.
 #' @param refCounts Count matrix of the reference model.
 #' Has to be given if \code{refCounts} and \code{counts} have different dimensions.
+#' @param binsize size of a bin in base pairs. Each given region will be partitioned into
+#' bins of this size.
 #' @return nothing.
 #' 
 #' @export
 applyModel <- function(regions, model=NULL, provideModel=FALSE, genomeSize, counts=NULL, bamtab=NULL,
-                       outdir=".", nthreads=1, learnTrans=FALSE, refCounts=NULL){
+                       outdir=".", nthreads=1, learnTrans=FALSE, refCounts=NULL, binsize=100){
   # check arguments and define variables
-  binsize <- 100
   if (!is.null(model)) provideModel <- FALSE
   if (is.null(model) && !provideModel){
     cat('No model specified. Provided mESC model will be used.')
@@ -80,6 +84,8 @@ applyModel <- function(regions, model=NULL, provideModel=FALSE, genomeSize, coun
   }
   # create outdir if it does not exist
   dir.create(file.path(outdir), showWarnings=FALSE)
+
+  regions <- binifyRegions(regions, binsize)
 
   # remove unnamed, random and mitochondrial chromosomes from regions' seqlevels
   levelsToDrop <- unique(unlist(lapply(c('Un', 'M', 'random', 'hap', 'alt', 'GL', 'NC', 'hs'), function(x) which(grepl(x, GenomeInfoDb:::seqlevels(regions))))))

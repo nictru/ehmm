@@ -27,7 +27,10 @@ getConstructModelOptions <- function(){
     list(arg="--outdir", type="character",
          help="Path to the output directory."),
     list(arg="--nthreads", type="integer", default=formals(constructModel)$nthreads,
-         help="Number of threads to be used")
+         help="Number of threads to be used"),
+    list(arg="--binsize", type="integer", default=100,
+         help="Size of a bin in base pairs. Each given region will be partitioned into
+         bins of this size.")
   )
   opts
 }
@@ -61,9 +64,11 @@ constructModelCLI <- function(args, prog){
 #' 
 #' @export
 constructModel <- function(model.e, model.p, counts.e, counts.p, regions.e, regions.p,
-                           model.bg=NULL, fg_to_bg=FALSE, accStates.e=NULL, nucStates.e=NULL, accStates.p=NULL, nucStates.p=NULL, outdir=".", nthreads=1){
+                           model.bg=NULL, fg_to_bg=FALSE, accStates.e=NULL, nucStates.e=NULL, accStates.p=NULL, nucStates.p=NULL, outdir=".", nthreads=1, binsize=100){
+  regions.e <- binifyRegions(regions.e, binsize)
+  regions.p <- binifyRegions(regions.p, binsize)
+
   # check arguments and define variables
-  binsize <- 100
   if (any(is.null(accStates.e), is.null(nucStates.p), is.null(accStates.p), is.null(nucStates.p))){
     cat('Automated state selection\n')
     states.e <- selectStates(model.e)

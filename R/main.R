@@ -26,7 +26,7 @@
 #' @import rtracklayer
 #' @import Rsamtools
 #' @import affyPLM
-NULL
+# NULL
 
 
 getLauncher <- function(dest="ehmm.R"){

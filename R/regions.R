@@ -94,16 +94,21 @@ tileRegions <- function(gr, width){
 
 binifyRegions <- function(regions, binsize) {
     if (any(width(regions) %% binsize != 0)) {
-        invalidRegions <- regions[width(regions)%%binsize!=0]
-        deltaLengths <- width(invalidRegions)%%binsize
+        regionsToCorrect <- regions[width(regions) %% binsize != 0]
+        deltaLengths <- binsize - (width(regionsToCorrect) %% binsize)
 
-        message(length(invalidRegions), " regions are not multiples of the selected bin size ", binsize, ", adjusting...")
+        print(width(regions) %% binsize)
 
-        deltaLengths <- sapply(deltaLengths, function(d) ifelse(d>binsize/2, binsize-d, -d))
-        end(invalidRegions) <- end(invalidRegions) + deltaLengths
-        width(invalidRegions) <- width(invalidRegions) + deltaLengths
-        regions[width(regions)%%binsize!=0] <- invalidRegions
+        message(length(regionsToCorrect), " regions are not multiples of the selected bin size ", binsize, ", adjusting...")
+
+        end(regionsToCorrect) <- end(regionsToCorrect) + deltaLengths
+        width(regionsToCorrect) <- width(regionsToCorrect) + deltaLengths
+        regions[width(regions) %% binsize != 0] <- regionsToCorrect
     }
+
+    print(width(regions) %% binsize)
+
+    if (any(width(regions) %% binsize != 0)) stop("some regions are still not multiples of the selected bin size ", binsize)
 
     regions
 }

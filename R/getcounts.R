@@ -103,7 +103,7 @@ getcounts <- function(regions, bamtab, binsize=100, repFun=defaultRepFun,
     #ARGUMENT CHECKING
     if (!inherits(regions, "GRanges")) stop("regions must be a GRanges object")
     if (length(binsize) != 1 || binsize <= 0) stop("invalid binsize")
-    if (any(width(regions) %% binsize != 0)) stop("regions must be multiples of binsize")
+    if (any(width(regions) %% binsize != 0)) stop("regions must be multiples of the binsize")
 
     bamtab <- validateBamtab(bamtab)
     

@@ -312,14 +312,34 @@ combineFgBgModels <- function(model.bg, model.e, model.p){
   states.n1.p <- which(startsWith(labels, 'P_N1')); states.a.p <- which(startsWith(labels, 'P_A')); states.n2.p <- which(startsWith(labels, 'P_N2'))
   states.bg <- which(startsWith(labels, 'bg'))
   A <- as.matrix(bdiag(model.e$transP, model.p$transP, model.bg$transP))
+
+  # Solve NaN problem
+  problem <- A[is.nan(rowSums(A))]
+  rest <- 1-sum(problem, na.rm = T)
+  problem[is.nan(problem)] <- rest/length(problem[is.nan(problem)])
+  A[is.nan(rowSums(A))] <- problem
+
   A[states.bg, states.n1.e] <- enhancerFreq / (length(states.bg) * length(states.n1.e))
   A[states.bg, states.n1.p] <- promoterFreq / (length(states.bg) * length(states.n1.p))
   A[states.bg, states.bg] <- A[states.bg, states.bg] * (1 - rowSums(A[states.bg, c(states.n1.e, states.n1.p)]))
   A[states.n2.e, states.bg] <- rowSums(A[states.n1.e, states.a.e]) / length(states.bg)
   A[states.n2.p, states.bg] <- rowSums(A[states.n1.p, states.a.p]) / length(states.bg)
-  A[states.n2.e, states.n2.e] <- A[states.n2.e, states.n2.e] * (1 - rowSums(A[states.n2.e, states.bg]))
-  A[states.n2.p, states.n2.p] <- A[states.n2.p, states.n2.p] * (1 - rowSums(A[states.n2.p, states.bg]))
+  A[states.n2.e, states.n2.e] <- A[states.n2.e, states.n2.e] / rowSums(A[states.n2.e,states.n2.e]) * (1 - rowSums(A[states.n2.e, -states.n2.e]))
+  A[states.n2.p, states.n2.p] <- A[states.n2.p, states.n2.p] / rowSums(A[states.n2.p,states.n2.p]) * (1 - rowSums(A[states.n2.p, -states.n2.p]))
   
+  # Solve NaN problem
+  A[is.nan(A)] <- 0
+  p <- A[rowSums(A)-1 > 1e-9,]
+  diff <- 1-ifelse(is.numeric(p), sum(p), rowSums(p))
+  pa <- p[-states.bg][p[-states.bg] > 0]
+  if (diff<0) {
+    pa <- pa + diff*pa
+  } else {
+    pa <- pa - diff*pa
+  }
+  p[-states.bg][p[-states.bg] > 0] <- pa
+  A[rowSums(A)-1 > 1e-9,] <- p
+
   # set uniform initial probs for 'allowed' states (bg, N1)
   I <- matrix(rep(0,nstates))
   I[c(states.n1.e, states.n1.p, states.bg)] <- 1 / length(c(states.n1.e, states.n1.p, states.bg))

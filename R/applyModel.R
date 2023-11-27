@@ -129,6 +129,13 @@ applyModel <- function(regions, model=NULL, provideModel=FALSE, genomeSize, coun
                                       bamtab=bamtab, outdir=outdir, nthreads=nthreads)
   }
 
+  commonMarks <- intersect(model$marks, rownames(counts))
+  if(nrow(counts)>1) counts <- counts[commonMarks,]
+  model$marks <- commonMarks
+  if (length(model$emisP[[1]]$mus) > length(commonMarks)) {
+    model$emisP <- lapply(model$emisP, lapply, "[", which(commonMarks==model$marks))
+  }
+
   # segment regions
   cat("apply model\n")
   segmentation <- segment(counts=counts, regions=regions, model=model, nstates=model$nstates, nthreads=nthreads,

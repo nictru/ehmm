@@ -65,8 +65,6 @@ constructModelCLI <- function(args, prog){
 #' @export
 constructModel <- function(model.e, model.p, counts.e, counts.p, regions.e, regions.p,
                            model.bg=NULL, fg_to_bg=FALSE, accStates.e=NULL, nucStates.e=NULL, accStates.p=NULL, nucStates.p=NULL, outdir=".", nthreads=1, binsize=100){
-  regions.e <- binifyRegions(regions.e, binsize)
-  regions.p <- binifyRegions(regions.p, binsize)
 
   # check arguments and define variables
   if (any(is.null(accStates.e), is.null(nucStates.p), is.null(accStates.p), is.null(nucStates.p))){
@@ -101,9 +99,9 @@ constructModel <- function(model.e, model.p, counts.e, counts.p, regions.e, regi
   
   # refine enhancer / promoter models (relearn on training data with keeping emisP fixed)
   cat("Refine foreground models\n")
-  segmentation.e.refinedTrans <- segment(counts=counts.e, regions=regions.e,  nstates=model.e.init$nstates, model=model.e.init, nthreads=nthreads,
+  segmentation.e.refinedTrans <- segment(counts=counts.e, regions=regions.e,  nstates=model.e.init$nstates, nthreads=nthreads,
                                          verbose_kfoots=TRUE, trainMode='viterbi', fix_emisP=TRUE, nbtype='lognormal', endstate=model.e.init$endstates)
-  segmentation.p.refinedTrans <- segment(counts=counts.p, regions=regions.p, nstates=model.p.init$nstates, model=model.p.init, nthreads=nthreads,
+  segmentation.p.refinedTrans <- segment(counts=counts.p, regions=regions.p, nstates=model.p.init$nstates, nthreads=nthreads,
                                          verbose_kfoots=TRUE, trainMode='viterbi', fix_emisP=TRUE, nbtype='lognormal', endstate=model.p.init$endstates)
   
   # add labels and colors to model objects

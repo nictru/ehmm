@@ -49,6 +49,12 @@ readRegions <- function(path, keepScore=F) {
         } else strand(gr) <- sub("\\.", "*", regions[[6]])
     }
 
+    levelsToDrop <- unique(unlist(lapply(c("Un", "M", "random",
+                                       "hap", "alt", "GL", "NC", "hs"), function(x) which(grepl(x,
+                                                                                          GenomeInfoDb:::seqlevels(gr))))))
+    if (length(levelsToDrop) > 0)
+        GenomeInfoDb::seqlevels(gr, pruning.mode="coarse") <- GenomeInfoDb::seqlevels(gr)[-levelsToDrop]
+
     gr
 }
 

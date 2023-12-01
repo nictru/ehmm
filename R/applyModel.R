@@ -163,7 +163,11 @@ extractRegions <- function(segmentation, regions, genomeSize, outdir){
   mapply(function(scores, elmName){
     label <- toupper(substr(elmName, 1, 1))
     gr$score <- scores
-    export.bw(gr, sprintf('%s/%s.scores.bw', outdir, elmName))
+
+    # Replace NA scores with 0
+    gr$score[is.na(gr$score)] <- 0
+
+    # export.bw(gr, sprintf('%s/%s.scores.bw', outdir, elmName))
     # export.bed(gr, sprintf('%s/%s.scores.bed', outdir, elmName))
     regionsBedfile <- sprintf('%s/%sRegions.bed', outdir, elmName)
     elms.tiled <- gr[startsWith(gr$name, paste0(label, '_A'))] # only save accessibility states

@@ -4,8 +4,8 @@ getApplyModelOptions <- function(){
          help="Path to the BED file with the genomic regions of interest."),
     list(arg="--genomeSize", type="character", required=TRUE, parser=readGenomeSize,
          help="Path to a two-column file indicating chromosome names and sizes."),
-    list(arg="--model", type="character", parser=readModel,
-         help="Path to the file with the parameters of the HMM. Only required if --provideModel flag is not set."),
+    list(arg="--model", type="character",
+         help="Path to the model RData file. Only required if --provideModel flag is not set."),
     list(arg="--provideModel", flag=TRUE,
          help="Whether or not to use the provided model that was learned on mouse embryonic stem cell data.
          If this flag is set, query data will be normalized to the data that was used during model training."),
@@ -82,6 +82,7 @@ applyModel <- function(regions, model=NULL, provideModel=FALSE, genomeSize, coun
     cat('No model specified. Provided mESC model will be used.')
     provideModel <- TRUE
   }
+  load(model)
   # create outdir if it does not exist
   dir.create(file.path(outdir), showWarnings=FALSE)
 

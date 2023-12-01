@@ -1,19 +1,11 @@
 getConstructModelOptions <- function(){
   opts <- list(
-    list(arg="--model.e", type="character", parser=readModel, required=TRUE,
-         help="Path to the file with the parameters of the enhancer HMM."),
-    list(arg="--model.p", type="character", parser=readModel, required=TRUE,
-         help="Path to the file with the parameters of the promoter HMM."),
-    list(arg="--counts.e", type="character", required=TRUE, parser=readCounts,
-         help="Path to the countmatrix for the enhancer training regions."),
-    list(arg="--counts.p", type="character", required=TRUE, parser=readCounts,
-         help="Path to the countmatrix for the promoter training regions."),
-    list(arg="--regions.e", type="character", required=TRUE, parser=readRegions,
-         help="Path to the BED file with the enhancer training regions associated to the count matrix."),
-    list(arg="--regions.p", type="character", required=TRUE, parser=readRegions,
-         help="Path to the BED file with the promoter training regions associated to the count matrix."),
-    list(arg="--model.bg", type="character", parser=readModel, required=FALSE,
-         help="Path to the file with the parameters of the background HMM."),
+    list(arg="--enhancers", type="character", required=TRUE,
+         help="Path to the RData file with the parameters of the enhancer HMM as well as the associated regions and counts."),
+    list(arg="--promoters", type="character", required=TRUE,
+         help="Path to the RData file with the parameters of the promoter HMM as well as the associated regions and counts."),
+    list(arg="--background", type="character", required=FALSE,
+         help="Path to the RData file with the parameters of the background HMM as well as the associated regions and counts."),
     list(arg="--fg_to_bg", flag=TRUE,
          help="Flag for whether to create a background model from the foreground emission probs with unitized transition probs. Default: FALSE"),
     list(arg="--accStates.e", type="character", parser=readStates,
@@ -46,13 +38,9 @@ constructModelCLI <- function(args, prog){
 #' Construct a total model by combining a background and two foreground models for enhancers and promoters.
 #' Prior to combining, the foreground models are refined by relearning the transition parameters.
 #'
-#' @param model.e A list with the parameters that describe the enhancer HMM.
-#' @param model.p A list with the parameters that describe the promoter HMM.
-#' @param counts.e count matrix for enhancer training regions.
-#' @param counts.p count matrix for promoter training regions.
-#' @param regions.e GRanges object containing the enhancer training regions.
-#' @param regions.p GRanges object containing the promoter training regions.
-#' @param model.bg A list with the parameters that describe the background HMM.
+#' @param enhancers A list with the parameters that describe the enhancer HMM as well as the associated regions and counts.
+#' @param promoters A list with the parameters that describe the promoter HMM as well as the associated regions and counts.
+#' @param background A list with the parameters that describe the background HMM as well as the associated regions and counts.
 #' @param fg_to_bg Flag for whether to create a background model from the foreground emission probs with unitized transition probs. Default: FALSE.
 #' @param accStates.e String of comma-separated state-numbers for enhancer accessibility states. If not given, states selection will be automated.
 #' @param nucStates.e String of comma-separated state-numbers for enhancer nucleosome states. If not given, states selection will be automated.
@@ -63,8 +51,19 @@ constructModelCLI <- function(args, prog){
 #' @return A list with the following arguments:
 #' 
 #' @export
-constructModel <- function(model.e, model.p, counts.e, counts.p, regions.e, regions.p,
-                           model.bg=NULL, fg_to_bg=FALSE, accStates.e=NULL, nucStates.e=NULL, accStates.p=NULL, nucStates.p=NULL, outdir=".", nthreads=1, binsize=100){
+constructModel <- function(enhancers, promoters, background, fg_to_bg=FALSE, accStates.e=NULL, nucStates.e=NULL, accStates.p=NULL, nucStates.p=NULL, outdir=".", nthreads=1, binsize=100){
+  load(enhancers)
+  model.e <- model
+  regions.e <- regions
+  counts.e <- counts
+
+  load(promoters)
+  model.p <- model
+  regions.p <- regions
+  counts.p <- counts
+
+  load(background)
+  model.bg <- model
 
   # check arguments and define variables
   if (any(is.null(accStates.e), is.null(nucStates.p), is.null(accStates.p), is.null(nucStates.p))){
@@ -118,6 +117,7 @@ constructModel <- function(model.e, model.p, counts.e, counts.p, regions.e, regi
   
   # combine fg / bg models, write to file
   model <- combineFgBgModels(model.bg, segmentation.e.refinedTrans$model, segmentation.p.refinedTrans$model)
+  save(model, file=paste(outdir, 'model.RData', sep='/'))
   modelPath <- paste(outdir, 'model.txt', sep='/')
   writeModel(model, modelPath, type='lognormal')
 }

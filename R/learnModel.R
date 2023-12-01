@@ -92,6 +92,9 @@ learnModel <- function(regions, nstates, bamtab, counts=NULL, outdir=".", nthrea
   viterbi_segments <- statesToSegments(segmentation$viterbi, segmentation$segments) # create GRanges object with viterbi states
   report(segments=viterbi_segments, model=segmentation$model, rdata=segmentation, outdir=outdir)
 
+  model <- segmentation$model
+  save(counts, model, regions, file=file.path(outdir, 'model.RData'))
+
   return(segmentation)
 }
 
